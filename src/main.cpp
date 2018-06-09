@@ -85,10 +85,32 @@ int main() {
   glShaderSource(fragmentShader, 1, &fragmentShaderSource, nullptr);
   glCompileShader(fragmentShader);
 
-  glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+  glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
 
   if (!success) {
     glGetShaderInfoLog(fragmentShader, 512, nullptr, infoLog);
+    std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << '\n';
+  }
+
+  auto fragmentShaderYellowSource{
+    "#version 330 core\n"			        \
+      "out vec4 FragColor;\n"			         \
+      "void main()\n"				        \
+      "{\n"						\
+      "FragColor = vec4(1.0f, 1.0f, 0.0f, 1.0f);\n"	\
+      "} \n"						\
+      };
+
+
+  unsigned int fragmentYellowShader;
+  fragmentYellowShader = glCreateShader(GL_FRAGMENT_SHADER);
+  glShaderSource(fragmentYellowShader, 1, &fragmentShaderYellowSource, nullptr);
+  glCompileShader(fragmentYellowShader);
+
+  glGetShaderiv(fragmentYellowShader, GL_COMPILE_STATUS, &success);
+
+  if (!success) {
+    glGetShaderInfoLog(fragmentYellowShader, 512, nullptr, infoLog);
     std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << '\n';
   }
 
@@ -104,16 +126,30 @@ int main() {
     std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << '\n';
   }
 
+  unsigned int shaderProgramYellow = glCreateProgram();
+  glAttachShader(shaderProgramYellow, vertexShader);
+  glAttachShader(shaderProgramYellow, fragmentYellowShader);
+  glLinkProgram(shaderProgramYellow);
+
+  glGetProgramiv(shaderProgramYellow, GL_LINK_STATUS, &success);
+  if(!success) {
+    glGetProgramInfoLog(shaderProgramYellow, 512, nullptr, infoLog);
+    std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << '\n';
+  }
+
   glDeleteShader(vertexShader);
   glDeleteShader(fragmentShader);
+  glDeleteShader(fragmentYellowShader);
 
   //
 
-  float triangle_vertices[] = {
+  float triangle_vertices_1[] = {
 			       -0.5f, -0.5f, 0.0f,
 			       0.5f, -0.5f, 0.0f,
 			       0.0f,  0.5f, 0.0f,
+  };
 
+  float triangle_vertices_2[] = {
 			       -0.8f, 0.9f, 0.0f,
 			       -0.6f, 0.9f, 0.0f,
 			       -0.7f, 0.5f, 0.0f
@@ -121,19 +157,29 @@ int main() {
 
 
   // VAO
-  unsigned int VAO;
-  glGenVertexArrays(1, &VAO);
-  glBindVertexArray(VAO);
+  unsigned int VAO[2];
+  glGenVertexArrays(2, VAO);
+  glBindVertexArray(VAO[0]);
 
   // VBOs are used to send large batches of vertices to the GPU
-  unsigned int VBO;
-  glGenBuffers(1, &VBO);
-  glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(triangle_vertices), triangle_vertices, GL_STATIC_DRAW);
+  unsigned int VBO1;
+  glGenBuffers(1, &VBO1);
+  glBindBuffer(GL_ARRAY_BUFFER, VBO1);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(triangle_vertices_1), triangle_vertices_1, GL_STATIC_DRAW);
 
-  //
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), static_cast<void*>(0));
   glEnableVertexAttribArray(0);
+
+  glBindVertexArray(VAO[1]);
+
+  unsigned int VBO2;
+  glGenBuffers(1, &VBO2);
+  glBindBuffer(GL_ARRAY_BUFFER, VBO2);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(triangle_vertices_2), triangle_vertices_2, GL_STATIC_DRAW);
+
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), static_cast<void*>(0));
+  glEnableVertexAttribArray(0);
+
 
   while(!glfwWindowShouldClose(window))
     {
@@ -143,15 +189,23 @@ int main() {
       glClear(GL_COLOR_BUFFER_BIT);
 
       glUseProgram(shaderProgram);
-      glBindVertexArray(VAO);
-      glDrawArrays(GL_TRIANGLES, 0, 6);
+
+      glBindVertexArray(VAO[0]);
+      glDrawArrays(GL_TRIANGLES, 0, 3);
+
+      glUseProgram(shaderProgramYellow);
+
+      glBindVertexArray(VAO[1]);
+      glDrawArrays(GL_TRIANGLES, 0, 3);
+
 
       glfwSwapBuffers(window);
       glfwPollEvents();
     }
 
-  glDeleteVertexArrays(1, &VAO);
-  glDeleteBuffers(1, &VBO);
+  glDeleteVertexArrays(2, VAO);
+  glDeleteBuffers(1, &VBO1);
+  glDeleteBuffers(1, &VBO2);
 
   glfwTerminate();
 
