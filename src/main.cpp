@@ -52,10 +52,13 @@ int main() {
 			   "layout (location = 0) in vec3 aPos;\n"	\
 			   "layout (location = 1) in vec3 aColor;\n"    \
 			   "out vec3 ourColor;\n" \
+			   "out vec4 position;\n" \
+			   "uniform vec3 offset;\n" \
 			   "void main()\n"				\
 			   "{\n"					\
-			   "    gl_Position = vec4(aPos, 1.0);\n" \
-			   "    ourColor = aColor;\n"       \
+			   "    position = vec4(aPos.x + offset.x, -1 * aPos.y, aPos.z, 1.0);\n" \
+			   "gl_Position = position\n;" \
+			   "   ourColor = aColor;\n"			\
 			   "}\n"					\
   };
 
@@ -78,10 +81,11 @@ int main() {
   auto fragmentShaderSource{
     "#version 330 core\n"			        \
       "out vec4 FragColor;\n"			         \
-      "in vec3 ourColor;"
+      "in vec3 ourColor;\n" \
+      "in vec4 position;\n"\
       "void main()\n"				        \
       "{\n"						\
-      "FragColor = vec4(ourColor, 1.0f);\n"	\
+      "FragColor = vec4(position);\n"	\
       "} \n"						\
       };
 
@@ -198,6 +202,10 @@ int main() {
       glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
       glClear(GL_COLOR_BUFFER_BIT);
 
+      float timeValue = static_cast<float>(glfwGetTime());
+      int vertexOffsetLocation = glGetUniformLocation(shaderProgram, "offset");
+      glUniform3f(vertexOffsetLocation, timeValue, 0, 0);
+
       glUseProgram(shaderProgram);
 
       glBindVertexArray(VAO[0]);
@@ -206,7 +214,7 @@ int main() {
       glUseProgram(shaderProgramOwnColor);
 
       // update the uniform color
-      float timeValue = static_cast<float>(glfwGetTime());
+
       float greenValue = std::sin(timeValue) / 2.0f + 0.5f;
       int vertexColorLocation = glGetUniformLocation(shaderProgramOwnColor, "ourColor");
       glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
