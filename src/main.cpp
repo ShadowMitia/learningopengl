@@ -2,6 +2,8 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 
+#include <cmath>
+
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
@@ -92,26 +94,27 @@ int main() {
     std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << '\n';
   }
 
-  auto fragmentShaderYellowSource{
-    "#version 330 core\n"			        \
-      "out vec4 FragColor;\n"			         \
+  auto fragmentShaderOwnColorSource{
+    "#version 330 core\n"                               \
+      "uniform vec4 ourColor;\n"				\
+      "out vec4 FragColor;\n"			        \
       "void main()\n"				        \
       "{\n"						\
-      "FragColor = vec4(1.0f, 1.0f, 0.0f, 1.0f);\n"	\
+      "FragColor = vec4(ourColor);\n"	\
       "} \n"						\
       };
 
 
-  unsigned int fragmentYellowShader;
-  fragmentYellowShader = glCreateShader(GL_FRAGMENT_SHADER);
-  glShaderSource(fragmentYellowShader, 1, &fragmentShaderYellowSource, nullptr);
-  glCompileShader(fragmentYellowShader);
+  unsigned int fragmentOwnColorShader;
+  fragmentOwnColorShader = glCreateShader(GL_FRAGMENT_SHADER);
+  glShaderSource(fragmentOwnColorShader, 1, &fragmentShaderOwnColorSource, nullptr);
+  glCompileShader(fragmentOwnColorShader);
 
-  glGetShaderiv(fragmentYellowShader, GL_COMPILE_STATUS, &success);
+  glGetShaderiv(fragmentOwnColorShader, GL_COMPILE_STATUS, &success);
 
   if (!success) {
-    glGetShaderInfoLog(fragmentYellowShader, 512, nullptr, infoLog);
-    std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << '\n';
+    glGetShaderInfoLog(fragmentOwnColorShader, 512, nullptr, infoLog);
+    std::cout << "ERROR::SHADER::FRAGMENTOWNCOLOR::COMPILATION_FAILED\n" << infoLog << '\n';
   }
 
   // compuler shader program
@@ -126,20 +129,20 @@ int main() {
     std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << '\n';
   }
 
-  unsigned int shaderProgramYellow = glCreateProgram();
-  glAttachShader(shaderProgramYellow, vertexShader);
-  glAttachShader(shaderProgramYellow, fragmentYellowShader);
-  glLinkProgram(shaderProgramYellow);
+  unsigned int shaderProgramOwnColor = glCreateProgram();
+  glAttachShader(shaderProgramOwnColor, vertexShader);
+  glAttachShader(shaderProgramOwnColor, fragmentOwnColorShader);
+  glLinkProgram(shaderProgramOwnColor);
 
-  glGetProgramiv(shaderProgramYellow, GL_LINK_STATUS, &success);
+  glGetProgramiv(shaderProgramOwnColor, GL_LINK_STATUS, &success);
   if(!success) {
-    glGetProgramInfoLog(shaderProgramYellow, 512, nullptr, infoLog);
-    std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << '\n';
+    glGetProgramInfoLog(shaderProgramOwnColor, 512, nullptr, infoLog);
+    std::cout << "ERROR::SHADEROWNCOLOR::PROGRAM::LINKING_FAILED\n" << infoLog << '\n';
   }
 
   glDeleteShader(vertexShader);
   glDeleteShader(fragmentShader);
-  glDeleteShader(fragmentYellowShader);
+  glDeleteShader(fragmentOwnColorShader);
 
   //
 
@@ -193,7 +196,13 @@ int main() {
       glBindVertexArray(VAO[0]);
       glDrawArrays(GL_TRIANGLES, 0, 3);
 
-      glUseProgram(shaderProgramYellow);
+      glUseProgram(shaderProgramOwnColor);
+
+      // update the uniform color
+      float timeValue = static_cast<float>(glfwGetTime());
+      float greenValue = std::sin(timeValue) / 2.0f + 0.5f;
+      int vertexColorLocation = glGetUniformLocation(shaderProgramOwnColor, "ourColor");
+      glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
 
       glBindVertexArray(VAO[1]);
       glDrawArrays(GL_TRIANGLES, 0, 3);
