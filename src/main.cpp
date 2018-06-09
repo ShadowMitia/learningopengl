@@ -43,24 +43,6 @@ int main() {
   glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
 
-  float triangle_vertices[] = {
-			       -0.5f, -0.5f, 0.0f,
-			       0.5f, -0.5f, 0.0f,
-			       0.0f,  0.5f, 0.0f
-  };
-
-
-  // VAO
-  unsigned int VAO;
-  glGenVertexArrays(1, &VAO);
-  glBindVertexArray(VAO);
-
-  // VBOs are used to send large batches of vertices to the GPU
-  unsigned int VBO;
-  glGenBuffers(1, &VBO);
-  glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(triangle_vertices), triangle_vertices, GL_STATIC_DRAW);
-
 
   // vertex shaders are used to normalise coordinates to openGL's visible region
   auto vertexShaderSource {
@@ -89,10 +71,9 @@ int main() {
   // fragment shaders are about calculating color output
 
   auto fragmentShaderSource{
-    "#version 330 core\n"			\
-      "out vec4 FragColor;\n"			\
-
-      "void main()\n"				\
+    "#version 330 core\n"			        \
+      "out vec4 FragColor;\n"			         \
+      "void main()\n"				        \
       "{\n"						\
       "FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"	\
       "} \n"						\
@@ -101,7 +82,7 @@ int main() {
 
   unsigned int fragmentShader;
   fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-  glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+  glShaderSource(fragmentShader, 1, &fragmentShaderSource, nullptr);
   glCompileShader(fragmentShader);
 
   glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
@@ -119,13 +100,36 @@ int main() {
 
   glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
   if(!success) {
-    glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+    glGetProgramInfoLog(shaderProgram, 512, nullptr, infoLog);
     std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << '\n';
   }
 
-
   glDeleteShader(vertexShader);
   glDeleteShader(fragmentShader);
+
+  //
+
+  float triangle_vertices[] = {
+			       -0.5f, -0.5f, 0.0f,
+			       0.5f, -0.5f, 0.0f,
+			       0.0f,  0.5f, 0.0f,
+
+			       -0.8f, 0.9f, 0.0f,
+			       -0.6f, 0.9f, 0.0f,
+			       -0.7f, 0.5f, 0.0f
+  };
+
+
+  // VAO
+  unsigned int VAO;
+  glGenVertexArrays(1, &VAO);
+  glBindVertexArray(VAO);
+
+  // VBOs are used to send large batches of vertices to the GPU
+  unsigned int VBO;
+  glGenBuffers(1, &VBO);
+  glBindBuffer(GL_ARRAY_BUFFER, VBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(triangle_vertices), triangle_vertices, GL_STATIC_DRAW);
 
   //
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), static_cast<void*>(0));
@@ -140,7 +144,7 @@ int main() {
 
       glUseProgram(shaderProgram);
       glBindVertexArray(VAO);
-      glDrawArrays(GL_TRIANGLES, 0, 3);
+      glDrawArrays(GL_TRIANGLES, 0, 6);
 
       glfwSwapBuffers(window);
       glfwPollEvents();
