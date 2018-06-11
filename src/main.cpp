@@ -52,9 +52,9 @@ int main() {
 			   "out vec2 TexCoord;\n"                       \
 			   "void main()\n"				\
 			   "{\n"					\
-			   "   gl_Position = vec4(aPos.x, -1 * aPos.y, aPos.z, 1.0);\n"\
+			   "   gl_Position = vec4(aPos, 1.0);\n"\
 			   "   ourColor = aColor;\n"			\
-			   "   TexCoord = aTexCoord;\n"                 \
+			   "   TexCoord = vec2(aTexCoord.x, aTexCoord.y);\n"                 \
 			   "}\n"					\
   };
 
@@ -80,12 +80,12 @@ int main() {
       "in vec3 ourColor;\n"                             \
       "in vec2 TexCoord;\n"                             \
       "uniform sampler2D ourTexture;\n"                 \
+      "uniform sampler2D ourTexture2;\n"                \
       "void main()\n"				        \
       "{\n"						\
-      "FragColor = texture(ourTexture, TexCoord);\n"	\
+      "FragColor = mix(texture(ourTexture, TexCoord), texture(ourTexture2, vec2(1.0 - TexCoord.x, TexCoord.y)), 0.2);\n"	\
       "} \n"						\
       };
-
 
   unsigned int fragmentShader;
   fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -97,29 +97,6 @@ int main() {
   if (!success) {
     glGetShaderInfoLog(fragmentShader, 512, nullptr, infoLog);
     std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << '\n';
-  }
-
-  auto fragmentShaderOwnColorSource{
-    "#version 330 core\n"                               \
-      "uniform vec4 ourColor;\n"		        \
-      "out vec4 FragColor;\n"			        \
-      "void main()\n"				        \
-      "{\n"						\
-      "FragColor = vec4(ourColor);\n"	                \
-      "} \n"						\
-      };
-
-
-  unsigned int fragmentOwnColorShader;
-  fragmentOwnColorShader = glCreateShader(GL_FRAGMENT_SHADER);
-  glShaderSource(fragmentOwnColorShader, 1, &fragmentShaderOwnColorSource, nullptr);
-  glCompileShader(fragmentOwnColorShader);
-
-  glGetShaderiv(fragmentOwnColorShader, GL_COMPILE_STATUS, &success);
-
-  if (!success) {
-    glGetShaderInfoLog(fragmentOwnColorShader, 512, nullptr, infoLog);
-    std::cout << "ERROR::SHADER::FRAGMENTOWNCOLOR::COMPILATION_FAILED\n" << infoLog << '\n';
   }
 
   // compuler shader program
@@ -134,26 +111,14 @@ int main() {
     std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << '\n';
   }
 
-  unsigned int shaderProgramOwnColor = glCreateProgram();
-  glAttachShader(shaderProgramOwnColor, vertexShader);
-  glAttachShader(shaderProgramOwnColor, fragmentOwnColorShader);
-  glLinkProgram(shaderProgramOwnColor);
-
-  glGetProgramiv(shaderProgramOwnColor, GL_LINK_STATUS, &success);
-  if(!success) {
-    glGetProgramInfoLog(shaderProgramOwnColor, 512, nullptr, infoLog);
-    std::cout << "ERROR::SHADEROWNCOLOR::PROGRAM::LINKING_FAILED\n" << infoLog << '\n';
-  }
-
   glDeleteShader(vertexShader);
   glDeleteShader(fragmentShader);
-  glDeleteShader(fragmentOwnColorShader);
 
   // Images
 
-  unsigned int texture;
-  glGenTextures(1, &texture);
-  glBindTexture(GL_TEXTURE_2D, texture);
+  unsigned int texture1;
+  glGenTextures(1, &texture1);
+  glBindTexture(GL_TEXTURE_2D, texture1);
 
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -161,6 +126,7 @@ int main() {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
   int width, height, nrChannels;
+  stbi_set_flip_vertically_on_load(true);
   unsigned char *data = stbi_load("../data/container.jpg", &width, &height, &nrChannels, 0);
   if (data)
     {
@@ -172,6 +138,28 @@ int main() {
       std::cout << "Failed to load texture" << std::endl;
     }
   stbi_image_free(data);
+
+  unsigned int texture2;
+  glGenTextures(1, &texture2);
+  glBindTexture(GL_TEXTURE_2D, texture2);
+
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+  data = stbi_load("../data/awesomeface.png", &width, &height, &nrChannels, 0);
+  if (data)
+    {
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+      glGenerateMipmap(GL_TEXTURE_2D);
+    }
+  else
+    {
+      std::cout << "Failed to load texture" << std::endl;
+    }
+  stbi_image_free(data);
+
 
 
  // set up vertex data (and buffer(s)) and configure vertex attributes
@@ -210,6 +198,13 @@ int main() {
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(6 * sizeof(float)));
     glEnableVertexAttribArray(2);
 
+        // tell opengl for each sampler to which texture unit it belongs to (only has to be done once)
+    // -------------------------------------------------------------------------------------------
+    glUseProgram(shaderProgram); // don't forget to activate/use the shader before setting uniforms!
+    // either set it manually like so:
+    glUniform1i(glGetUniformLocation(shaderProgram, "ourTexture"), 0);
+    glUniform1i(glGetUniformLocation(shaderProgram, "ourTexture2"), 1);
+
   while(!glfwWindowShouldClose(window))
     {
       processInput(window);
@@ -217,11 +212,12 @@ int main() {
       glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
       glClear(GL_COLOR_BUFFER_BIT);
 
-      glBindTexture(GL_TEXTURE_2D, texture);
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, texture1);
+      glActiveTexture(GL_TEXTURE1);
+      glBindTexture(GL_TEXTURE_2D, texture2);
 
       glUseProgram(shaderProgram);
-
-
       glBindVertexArray(VAO);
       glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
