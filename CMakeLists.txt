@@ -4,6 +4,7 @@ cmake_minimum_required(VERSION 3.8)
 # https://pabloariasal.github.io/2018/02/19/its-time-to-do-cmake-right/
 # https://github.com/Polytonic/Glitter/blob/master/CMakeLists.txt
 # https://github.com/lefticus/cpp_starter_project
+# https://github.com/JoeyDeVries/LearnOpenGL/blob/master/CMakeLists.txt
 
 
 project(learnopengl LANGUAGES C CXX)
@@ -69,6 +70,15 @@ target_include_directories(GLAD
     PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/GLAD/)
 
+add_library(stb_image SHARED libs/stb_image/stb_image.c)
+target_include_directories(stb_image
+   PUBLIC
+   $<INSTALL_INTERFACE:include>
+   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/libs/stb_image>
+   PRIVATE
+     ${CMAKE_CURRENT_SOURCE_DIR}/libs/stb_image)
+
+
 # Build executable
 add_executable(sandbox src/main.cpp)
 target_compile_features(sandbox PRIVATE cxx_std_14)
@@ -76,6 +86,7 @@ target_link_libraries(sandbox PRIVATE project_warnings --coverage)
 
 target_link_libraries(sandbox PRIVATE GLAD)
 target_link_libraries(sandbox PRIVATE glfw)
+target_link_libraries(sandbox PRIVATE stb_image)
 
 
 #enable_testing()
