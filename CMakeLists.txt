@@ -9,6 +9,9 @@ cmake_minimum_required(VERSION 3.8)
 
 project(learnopengl LANGUAGES C CXX)
 
+include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+conan_basic_setup()
+
 
 if(CMAKE_COMPILER_IS_GNUCC)
   option(ENABLE_COVERAGE "Enable coverage reporting for gcc/clang" FALSE)
@@ -55,6 +58,10 @@ else()
                          )
 endif()
 
+# data dependencies
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/container.jpg DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin/ressources)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/awesomeface.png DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin/ressources)
+
 # Find dependencies
 
 # Find GLFW3
@@ -70,6 +77,8 @@ target_include_directories(GLAD
     PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/GLAD/)
 
+# add stb_image
+# source: https://github.com/nothings/stb
 add_library(stb_image SHARED libs/stb_image/stb_image.c)
 target_include_directories(stb_image
    PUBLIC
@@ -78,6 +87,9 @@ target_include_directories(stb_image
    PRIVATE
      ${CMAKE_CURRENT_SOURCE_DIR}/libs/stb_image)
 
+# Find GLM
+# pris depuis conan
+find_package(GLM REQUIRED)
 
 # Build executable
 add_executable(sandbox src/main.cpp)
@@ -87,6 +99,7 @@ target_link_libraries(sandbox PRIVATE project_warnings --coverage)
 target_link_libraries(sandbox PRIVATE GLAD)
 target_link_libraries(sandbox PRIVATE glfw)
 target_link_libraries(sandbox PRIVATE stb_image)
+target_link_libraries(sandbox ${CONAN_LIBS})
 
 
 #enable_testing()
