@@ -168,3 +168,4 @@ anaconda-mode/
 
 
 # End of https://www.gitignore.io/api/c,c++,cmake,linux,emacs
+.cquery_cached_index/
