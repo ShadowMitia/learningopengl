@@ -58,9 +58,16 @@ else()
                          )
 endif()
 
+set(RESSOURCES
+  container.jpg
+  awesomeface.png
+  wall.jpg
+  )
+
 # data dependencies
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/container.jpg DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin/ressources)
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/awesomeface.png DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin/ressources)
+foreach (RESSOURCE ${RESSOURCES})
+  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/${RESSOURCE} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin/ressources)
+endforeach(RESSOURCE)
 
 # Find dependencies
 
