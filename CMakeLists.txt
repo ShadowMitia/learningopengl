@@ -58,13 +58,13 @@ else()
                          )
 endif()
 
+# manage ressources
 set(RESSOURCES
   container.jpg
   awesomeface.png
   wall.jpg
   )
 
-# data dependencies
 foreach (RESSOURCE ${RESSOURCES})
   file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/${RESSOURCE} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin/ressources)
 endforeach(RESSOURCE)
